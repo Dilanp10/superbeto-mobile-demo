@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root { font-family: Manrope, sans-serif; }
+
+* { -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  background: #f6f7fb;
+  /* respeta el notch / barra inferior del celu */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
