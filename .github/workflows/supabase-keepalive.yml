@@ -1,0 +1,29 @@
+name: Supabase keep-alive
+
+# El free tier de Supabase pausa el proyecto tras 7 días sin actividad en la
+# API. Este workflow le pega cada ~5 días para que nunca llegue a ese límite.
+# */5 en día-del-mes no es un intervalo perfecto (varía un poco en los bordes
+# de mes), pero el peor caso son 5 días exactos — sigue cómodo debajo del 7.
+on:
+  schedule:
+    - cron: "0 6 */5 * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pegarle a la API (mantiene el proyecto activo)
+        run: |
+          status=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/products?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          echo "HTTP status: $status"
+          cat /tmp/body.json
+          # 000 = no conectó (DNS/timeout real). Cualquier otro status (incluso
+          # 401/403 por RLS) significa que el proyecto está arriba y respondió.
+          if [ "$status" = "000" ]; then
+            echo "::error::No se pudo conectar a Supabase — revisar si el proyecto sigue pausado."
+            exit 1
+          fi
