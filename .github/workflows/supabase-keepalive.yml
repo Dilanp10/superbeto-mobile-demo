@@ -1,12 +1,16 @@
 name: Supabase keep-alive
 
 # El free tier de Supabase pausa el proyecto tras 7 días sin actividad en la
-# API. Este workflow le pega cada ~5 días para que nunca llegue a ese límite.
-# */5 en día-del-mes no es un intervalo perfecto (varía un poco en los bordes
-# de mes), pero el peor caso son 5 días exactos — sigue cómodo debajo del 7.
+# API. Este workflow le pega TODOS los días para que nunca llegue a ese límite.
+#
+# Historia: el intervalo original era `0 6 */5 * *` (cada 5 días). Los bordes
+# de mes de `*/5` en día-del-mes generan huecos de más de 7 días (p. ej. del
+# día 1 al 6) y Supabase pausó el proyecto. Una vez pausado, este workflow
+# tampoco pudo despertarlo — sólo mantiene vivo lo que ya está vivo — y las
+# corridas siguientes fallaron. Diario elimina el problema.
 on:
   schedule:
-    - cron: "0 6 */5 * *"
+    - cron: "0 6 * * *"
   workflow_dispatch: {}
 
 jobs:
@@ -24,6 +28,6 @@ jobs:
           # 000 = no conectó (DNS/timeout real). Cualquier otro status (incluso
           # 401/403 por RLS) significa que el proyecto está arriba y respondió.
           if [ "$status" = "000" ]; then
-            echo "::error::No se pudo conectar a Supabase — revisar si el proyecto sigue pausado."
+            echo "::error::No se pudo conectar a Supabase — revisar si el proyecto sigue pausado (restore_project desde el dashboard o vía API)."
             exit 1
           fi
